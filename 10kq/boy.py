@@ -1,5 +1,6 @@
 import requests
 import pandas as pd
+import json
 
 url = "https://raw.githubusercontent.com/pbr20/tgbot/refs/heads/main/10kq/botreply.tsv"
 
@@ -16,7 +17,10 @@ def read_msg(offset):
 
   print(data)
   for result in data["result"]:
-      send_msg(result)
+      if "message" in result and "text" in result["message"] and "poll" in result["message"]["text"]:
+        send_poll(result)
+      elif "message" in result and "text" in result["message"]:
+        send_msg(result)
   if data["result"]:
     return data["result"][-1]["update_id"] + 1
 
@@ -41,7 +45,15 @@ def send_msg(message):
   }
   resp = requests.get(base_url + "/sendMessage" , data = parameters)
   print(resp.text)
-
+def send_poll(message):
+   chat_id = message["message"]["chat"]["id"]
+   parameters = {
+        "chat_id" : chat_id,
+        "question" : "Do you like me?",
+        "options" : json.dumps(["Yes", "No"]),
+   }
+   resp = requests.get(base_url + "/sendPoll" , data = parameters)
+   print(resp.text)
 offset = 0
 
 while True:
